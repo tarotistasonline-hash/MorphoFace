@@ -1,6 +1,6 @@
 {
   "name": "Morphoface",
   "description": "An interactive physiognomy and face-reading application that analyzes facial structures, shapes, and proportions to offer guidance and insights into temperament and traits.",
-  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

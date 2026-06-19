@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
+import fs from "fs";
 import { GoogleGenAI, Type } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
@@ -642,6 +643,79 @@ app.post("/api/analyze", async (req, res) => {
       success: false,
       error: error?.message || "An unexpected error occurred during face morphopsicología scanning."
     });
+  }
+});
+
+// --- URL Shortener Engine for Morphoface ---
+const SHORT_LINKS_FILE = path.join(process.cwd(), "short-links.json");
+
+// Load short links from file
+function loadShortLinks(): Record<string, string> {
+  try {
+    if (fs.existsSync(SHORT_LINKS_FILE)) {
+      const data = fs.readFileSync(SHORT_LINKS_FILE, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error("[Shortener] Failed to read short links file:", err);
+  }
+  return {};
+}
+
+// Save a short link mapping
+function saveShortLink(id: string, payload: string) {
+  try {
+    const links = loadShortLinks();
+    links[id] = payload;
+    fs.writeFileSync(SHORT_LINKS_FILE, JSON.stringify(links, null, 2), "utf-8");
+  } catch (err) {
+    console.error("[Shortener] Failed to write short links file:", err);
+  }
+}
+
+// Generate deterministic compact alphanumeric ID
+function generateShortId(payload: string): string {
+  let hash = 0;
+  for (let i = 0; i < payload.length; i++) {
+    hash = (hash << 5) - hash + payload.charCodeAt(i);
+    hash |= 0;
+  }
+  const positiveHash = Math.abs(hash).toString(36);
+  // Add some randomness to guarantee uniqueness per generate session
+  const rand = Math.random().toString(36).substring(2, 5);
+  return (positiveHash + rand).substring(0, 8);
+}
+
+// POST endpoint to shorten long payload URL
+app.post("/api/shorten", (req, res) => {
+  try {
+    const { payload } = req.body;
+    if (!payload) {
+      return res.status(400).json({ success: false, error: "Missing payload string" });
+    }
+    const id = generateShortId(payload);
+    saveShortLink(id, payload);
+    return res.json({ success: true, id });
+  } catch (err: any) {
+    console.error("Error shortening link:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET endpoint to redirect short link scans
+app.get("/scan/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    const links = loadShortLinks();
+    const payload = links[id];
+    if (payload) {
+      return res.redirect(`/?sharedReport=${encodeURIComponent(payload)}`);
+    } else {
+      return res.redirect("/?error=link-not-found");
+    }
+  } catch (err) {
+    console.error("Redirect error in /scan/:id:", err);
+    return res.redirect("/");
   }
 });
 

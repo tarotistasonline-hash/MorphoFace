@@ -42,7 +42,6 @@ import { downloadPDFSummary } from "./utils/pdfGenerator";
 import { playHotspotTone, startScanningSound, stopScanningSound, playAgingSliderChangeSound, toggleAmbientMusic, isAmbientMusicPlaying } from "./utils/audioFeedback";
 import AnalysisComparer, { ScanOption } from "./components/AnalysisComparer";
 import { generateFallbackReport } from "./utils/reportGenerator";
-import { compressReport, decompressReport } from "./utils/shareCompressor";
 
 const resizeImageData = (base64Str: string, maxDim: number): Promise<string> => {
   return new Promise((resolve) => {
@@ -540,28 +539,6 @@ const exportReportAsPng = (
   }
 };
 
-const reportContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-    },
-  },
-};
-
-const reportItemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  },
-};
-
 export default function App() {
   const { language, setLanguage, t } = useLanguage();
 
@@ -594,6 +571,9 @@ export default function App() {
   const [isCopying, setIsCopying] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [hasLoadedShared, setHasLoadedShared] = useState(false);
+  const [shortId, setShortId] = useState<string | null>(null);
+  const [isShortening, setIsShortening] = useState(false);
+  const [shareLinkType, setShareLinkType] = useState<"branded" | "sandbox">("branded");
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [showMirrorGuide, setShowMirrorGuide] = useState(false);
   const [showForecast, setShowForecast] = useState(false);
@@ -647,18 +627,66 @@ export default function App() {
       const sharedReportParam = params.get("sharedReport");
       
       if (sharedReportParam && !hasLoadedShared) {
-        const result = decompressReport(sharedReportParam);
-        if (result && result.report) {
-          setCustomReport(result.report);
-          setIsFallbackActive(false);
-          setHasLoadedShared(true);
-          if (result.subjectName) {
-            setShareSubjectName(result.subjectName);
+        try {
+          const decodedStr = decodeURIComponent(escape(atob(sharedReportParam)));
+          const decodedReport = JSON.parse(decodedStr);
+          if (decodedReport && decodedReport.faceShape) {
+            setCustomReport(decodedReport);
+            setIsFallbackActive(false);
+            setHasLoadedShared(true);
+            if (decodedReport.subjectName) {
+              setShareSubjectName(decodedReport.subjectName);
+            }
           }
+        } catch (e) {
+          console.error("Failed to decode shared report parameter", e);
         }
       }
     }
   }, [language]);
+
+  // Trigger URL shortening dynamically when sharing modal is open or report changes
+  useEffect(() => {
+    if (!isShareModalOpen || !customReport) return;
+
+    let active = true;
+    const generateShortLink = async () => {
+      setIsShortening(true);
+      try {
+        const currentLocalShare = shareTranslations[language] || shareTranslations["es"];
+        const payload = {
+          ...customReport,
+          subjectName: shareSubjectName || currentLocalShare.defaultSubject
+        };
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+        
+        const response = await fetch("/api/shorten", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ payload: encoded })
+        });
+        
+        const data = await response.json();
+        if (active && data && data.success && data.id) {
+          setShortId(data.id);
+        }
+      } catch (err) {
+        console.error("Shortening link failed:", err);
+      } finally {
+        if (active) {
+          setIsShortening(false);
+        }
+      }
+    };
+
+    generateShortLink();
+
+    return () => {
+      active = false;
+    };
+  }, [isShareModalOpen, customReport, shareSubjectName, language]);
   
   // Controls
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -875,12 +903,24 @@ export default function App() {
     let link = baseUrl;
     
     if (customReport) {
-      try {
-        const encoded = compressReport(customReport, shareSubjectName || localShare.defaultSubject);
-        link = `${baseUrl}?sharedReport=${encoded}`;
-      } catch (err) {
-        console.error("Failed to generate custom share link", err);
-        link = baseUrl;
+      if (shortId) {
+        if (shareLinkType === "branded") {
+          link = `https://morphoface.ai/scan/${shortId}`;
+        } else {
+          link = `${window.location.origin}/scan/${shortId}`;
+        }
+      } else {
+        const payload = {
+          ...customReport,
+          subjectName: shareSubjectName || localShare.defaultSubject
+        };
+        try {
+          const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+          link = `${baseUrl}?sharedReport=${encoded}`;
+        } catch (err) {
+          console.error("Failed to generate custom share link", err);
+          link = baseUrl;
+        }
       }
     }
     
@@ -2131,17 +2171,10 @@ export default function App() {
             )}
             
             {activeReport ? (
-              <motion.div
-                key={activeReport ? `${activeReport.faceShape}_${activeReport.overallType}_${activeReport.temperament}_${activeReport.strengths.length}` : "empty"}
-                initial="hidden"
-                animate="visible"
-                variants={reportContainerVariants}
-                className="space-y-6 text-left text-stone-200"
-                id="complete-report-container"
-              >
+              <div className="space-y-6 animate-fade-in text-left text-stone-200" id="complete-report-container">
                 
                 {/* 1. Header Card - Complete Report Title & Fast Metadata */}
-                <motion.div variants={reportItemVariants} className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-4" id="report-main-identity-card">
+                <div className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-4" id="report-main-identity-card">
                   
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-850 pb-4">
                     <div className="space-y-1">
@@ -2226,10 +2259,10 @@ export default function App() {
                     </div>
                   </div>
 
-                </motion.div>
+                </div>
 
                 {/* 2. Zonas Faciales Section */}
-                <motion.div variants={reportItemVariants} className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-6" id="complete-report-zones-card">
+                <div className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-6 animate-fade-in" id="complete-report-zones-card">
                   <div className="flex items-center gap-2.5 border-b border-stone-850 pb-3">
                     <Brain className="w-5 h-5 text-purple-400 animate-pulse" />
                     <h3 className="text-sm font-extrabold font-mono uppercase tracking-wider text-stone-200">
@@ -2331,10 +2364,10 @@ export default function App() {
                       </div>
                     </div>
 
-                  </motion.div>
+                  </div>
 
                   {/* 3. Receptores Faciales y Simetría Section */}
-                  <motion.div variants={reportItemVariants} className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-6" id="complete-report-features-card">
+                  <div className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-6 animate-fade-in" id="complete-report-features-card">
                     <div className="flex items-center gap-2.5 border-b border-stone-850 pb-3">
                       <Eye className="w-5 h-5 text-rose-400 animate-pulse" />
                       <h3 className="text-sm font-extrabold font-mono uppercase tracking-wider text-stone-200">
@@ -2857,10 +2890,10 @@ export default function App() {
                       </p>
                     </div>
 
-                  </motion.div>
+                  </div>
 
                   {/* 4. Línea Temporal Psicológica Section */}
-                  <motion.div variants={reportItemVariants} className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-6" id="complete-report-timeline-card">
+                  <div className="bg-stone-900/40 border border-stone-850 rounded-2xl p-6 space-y-6 animate-fade-in" id="complete-report-timeline-card">
                     <div className="flex items-center gap-2.5 border-b border-stone-850 pb-3">
                       <Compass className="w-5 h-5 text-emerald-400 animate-spin-slow" />
                       <h3 className="text-sm font-extrabold font-mono uppercase tracking-wider text-stone-200">
@@ -2910,10 +2943,10 @@ export default function App() {
                       </div>
 
                     </div>
-                  </motion.div>
+                  </div>
 
             {/* Strengths & Growth Areas */}
-            <motion.div variants={reportItemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6" id="strengths-weaknesses-container">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="strengths-weaknesses-container">
               
               {/* Strengths card */}
               <div className="bg-stone-900/30 border border-stone-850 p-4 rounded-2xl space-y-3" id="strengths-card">
@@ -2947,8 +2980,8 @@ export default function App() {
                 </ul>
               </div>
 
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         ) : (
           <div className="bg-stone-900/30 border border-stone-850 rounded-2xl p-6 sm:p-8 space-y-6 animate-fade-in" id="welcome-intro-card">
             <div className="space-y-2 border-b border-stone-850 pb-4">
@@ -3143,6 +3176,60 @@ export default function App() {
                     className="w-full bg-stone-950 border border-stone-850 rounded-xl px-4 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-amber-500 transition-colors font-sans"
                     id="share-subject-name-input"
                   />
+                </div>
+              )}
+
+              {/* URL Shortener Branded Link Preview CARD */}
+              {customReport && (
+                <div className="bg-stone-950/60 border border-stone-850/80 rounded-2xl p-4.5 space-y-3 animate-fade-in" id="share-link-shortener-card">
+                  <div className="flex items-center justify-between col-span-2">
+                    <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider">
+                      {language === "fr" ? "Lien de Partage" : language === "en" ? "Sharing Link" : "Enlace Compartido"}
+                    </span>
+                    <div className="flex rounded-lg bg-stone-900 border border-stone-800 p-0.5" id="brand-selector-pill-group">
+                      <button
+                        onClick={() => setShareLinkType("branded")}
+                        className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase transition-all duration-150 cursor-pointer ${
+                          shareLinkType === "branded" ? "bg-amber-500/15 text-amber-400 border border-amber-500/25" : "text-stone-500 hover:text-stone-300 border border-transparent"
+                        }`}
+                        id="select-branded-btn"
+                      >
+                        {language === "fr" ? "Branded" : language === "en" ? "Branded" : "Branded"}
+                      </button>
+                      <button
+                        onClick={() => setShareLinkType("sandbox")}
+                        className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase transition-all duration-150 cursor-pointer ${
+                          shareLinkType === "sandbox" ? "bg-amber-500/15 text-amber-400 border border-amber-500/25" : "text-stone-500 hover:text-stone-300 border border-transparent"
+                        }`}
+                        id="select-sandbox-btn"
+                      >
+                        {language === "fr" ? "Démo" : language === "en" ? "Functional" : "Demostración"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-stone-900/80 border border-stone-850/60 rounded-xl p-3 flex items-center justify-between gap-3 text-stone-200 select-all" id="short-url-display-box">
+                    <div className="overflow-x-auto whitespace-nowrap scrollbar-none font-mono text-xs text-amber-400 select-all w-full flex items-center gap-1.5" style={{ scrollbarWidth: "none" }}>
+                      <span className="text-stone-500 select-all">https://</span>
+                      {isShortening ? (
+                        <span className="text-stone-500 animate-pulse">morphoface.ai/scan/...</span>
+                      ) : shareLinkType === "branded" ? (
+                        <span className="text-amber-400 font-semibold select-all">morphoface.ai/scan/{shortId || "a1B2c3d4"}</span>
+                      ) : (
+                        <span className="text-amber-400 font-semibold select-all">{typeof window !== "undefined" ? window.location.host : "localhost:3000"}/scan/{shortId || "a1B2c3d4"}</span>
+                      )}
+                    </div>
+                    {isShortening && (
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-500 animate-spin shrink-0" />
+                    )}
+                  </div>
+                  
+                  <p className="text-[10px] text-stone-500 leading-normal" id="short-url-helper-text">
+                    {shareLinkType === "branded" 
+                      ? (language === "es" ? "Enlace de alta gama simplificado para redes sociales y bios." : language === "fr" ? "Lien premium simplifié idéal pour les réseaux sociaux et bios." : "Premium simplified link ideal for social networks and bios.")
+                      : (language === "es" ? "Enlace funcional que redirige automáticamente para ver el reporte en vivo." : language === "fr" ? "Lien fonctionnel redirigeant pour afficher le rapport en direct." : "Functional redirecting link that loads the live report in this preview env.")
+                    }
+                  </p>
                 </div>
               )}
 
