@@ -567,6 +567,7 @@ export default function App() {
 
   // Share States
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [shareSubjectName, setShareSubjectName] = useState("");
   const [isCopying, setIsCopying] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -1201,6 +1202,19 @@ export default function App() {
                 </>
               )}
             </button>
+
+            {/* Elegant Support / Donation Button */}
+            <a
+              href="https://mpago.la/1LHyBwV"
+              target="_blank"
+              referrerPolicy="no-referrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all duration-300 bg-red-500/10 border-red-500/20 text-red-400 hover:text-red-300 hover:border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.1)] hover:shadow-[0_0_18px_rgba(239,68,68,0.25)] cursor-pointer"
+              id="support-site-btn"
+              title={language === "fr" ? "Soutenir le site" : language === "en" ? "Support the site" : "Apoyar el mantenimiento del sitio"}
+            >
+              <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400/20 animate-pulse" />
+              <span className="font-bold">{language === "fr" ? "Soutenir" : language === "en" ? "Support" : "Aportar"}</span>
+            </a>
           </div>
 
         </div>
@@ -3088,6 +3102,37 @@ export default function App() {
           <FacialAnalysisGuide />
         </section>
 
+        {/* Elegant site maintenance contribution banner */}
+        <div className="bg-gradient-to-r from-stone-900 via-stone-900/90 to-stone-950 border border-stone-850/60 rounded-3xl p-6 sm:p-8 space-y-4 max-w-4xl mx-auto shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden" id="site-contribution-banner">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-2 max-w-2xl text-center md:text-left">
+            <span className="text-[9px] font-mono text-red-400 bg-red-500/10 px-2.5 py-0.5 rounded-full border border-red-500/20 uppercase font-black tracking-widest inline-flex items-center gap-1.5">
+              <Heart className="w-3 h-3 text-red-400 fill-red-400/20" />
+              <span>{language === "fr" ? "Soutien" : language === "en" ? "Support" : "Aporte voluntario"}</span>
+            </span>
+            <h3 className="text-base font-bold tracking-tight text-stone-100 font-sans">
+              {language === "fr" ? "Aidez-nous à maintenir Morphoface en ligne" : language === "en" ? "Help us keep Morphoface online" : "¿Te gustaría apoyar el mantenimiento del sitio?"}
+            </h3>
+            <p className="text-xs text-stone-400 leading-relaxed font-sans">
+              {language === "fr" 
+                ? "Morphoface fonctionne grâce à des serveurs d'IA dédiés. Si notre outil d'analyse faciale vous est utile, un don libre nous aide à payer l'infrastructure."
+                : language === "en"
+                ? "Morphoface operates using real-time dedicated AI servers. If you find value in our face readings, a small contribution helps us sustain hosting and keep services live."
+                : "Para ofrecer análisis morfopsicológicos interactivos sin publicidad, sostenemos servidores de IA activos de alta gama. Si valoras la precisión y deseas apoyarnos, puedes colaborar con el mantenimiento."}
+            </p>
+          </div>
+          <a
+            href="https://mpago.la/1LHyBwV"
+            target="_blank"
+            referrerPolicy="no-referrer"
+            className="shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-sans font-extrabold text-xs transition-all cursor-pointer shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 uppercase tracking-wider group hover:-translate-y-0.5 duration-200"
+            id="banner-donate-btn"
+          >
+            <span>{language === "fr" ? "Contribuer" : language === "en" ? "Support" : "Aportar voluntariamente"}</span>
+            <ChevronRight className="w-4 h-4 text-stone-950 group-hover:translate-x-0.5 transition-transform" />
+          </a>
+        </div>
+
       </main>
 
       {/* Aesthetic Site Footer */}
@@ -3278,7 +3323,6 @@ export default function App() {
                   <ChevronRight className="w-4 h-4 text-stone-500" />
                 </button>
               </div>
-
             </motion.div>
           </motion.div>
         )}
