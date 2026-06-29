@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>InvertiPlay AR 🇦🇷 — Simulador de Inversiones</title>
+<meta name="description" content="Simulá tu cartera con activos argentinos e internacionales. Dólar, Merval, CEDEARs, Bonos, Cripto, Vaca Muerta y más. Análisis IA en tiempo real."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#05080d;font-family:'Rajdhani',sans-serif;color:#dde8f4;min-height:100vh}
+.app{max-width:980px;margin:0 auto;padding:14px;min-height:100vh}
+
+/* ── HEADER ── */
+.hdr{text-align:center;padding:18px 0 14px;border-bottom:1px solid #0e1f32;margin-bottom:16px}
+.hdr-badge{font-family:'Share Tech Mono',monospace;font-size:11px;color:#74acdf;letter-spacing:3px;margin-bottom:4px}
+.hdr h1{font-size:30px;font-weight:700;background:linear-gradient(120deg,#74acdf 0%,#00ff88 45%,#ffd700 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:3px}
+.hdr p{color:#4a6a88;font-size:13px}
+
+/* ── CONTADOR VISITAS ── */
+.visit-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:7px 14px;background:#05080d;border:1px solid #0e1f32;border-radius:7px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#3a5a7a}
+.visit-dot{width:8px;height:8px;border-radius:50%;background:#00ff88;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 #00ff8860}50%{opacity:.6;box-shadow:0 0 0 6px #00ff8800}}
+.visit-count{color:#00ff88;font-size:14px;font-weight:700}
+
+/* ── APORTE / SPONSOR ── */
+.sponsor-bar{background:linear-gradient(135deg,#0a1520,#0f1a2a);border:1px solid #1a3a5a;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sponsor-txt{flex:1;min-width:180px}
+.sponsor-txt strong{color:#ffd700;font-size:14px;display:block;margin-bottom:2px}
+.sponsor-txt span{color:#4a6a88;font-size:12px;font-family:'Share Tech Mono',monospace}
+.sponsor-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn-aporte{padding:8px 16px;background:linear-gradient(120deg,#00b1ea,#0070d2);color:#fff;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;letter-spacing:.5px;transition:all .2s;white-space:nowrap}
+.btn-aporte:hover{transform:translateY(-1px);box-shadow:0 4px 14px #00b1ea40}
+.btn-sponsor{padding:8px 16px;background:linear-gradient(120deg,#ffd700,#ffb300);color:#000;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:7px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;letter-spacing:.5px;transition:all .2s;white-space:nowrap}
+.btn-sponsor:hover{transform:translateY(-1px);box-shadow:0 4px 14px #ffd70040}
+
+/* ── TICKER ── */
+.ticker{background:#05080d;border:1px solid #0e1f32;border-radius:7px;padding:7px 12px;margin-bottom:16px;overflow:hidden}
+.tick-scroll{font-family:'Share Tech Mono',monospace;font-size:11px;white-space:nowrap;animation:scroll 60s linear infinite;display:inline-block}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.t-up{color:#00ff88}.t-dn{color:#ff4444}
+
+/* ── MAIN TABS ── */
+.main-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid #0e1f32}
+.main-tab{padding:9px 20px;border:none;background:none;color:#3a5a7a;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px}
+.main-tab:hover{color:#7aaac8}
+.main-tab.on{color:#00ff88;border-bottom-color:#00ff88}
+
+/* ── CAPITAL ── */
+.cap-box{background:#080e17;border:1px solid #0e1f32;border-radius:10px;padding:16px;margin-bottom:16px}
+.sec-lbl{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:#2a4a6a;text-transform:uppercase;margin-bottom:11px}
+.cap-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cap-btn{background:#05080d;border:1px solid #152535;color:#4a7a9a;padding:6px 12px;border-radius:6px;font-size:12px;font-family:'Share Tech Mono',monospace;cursor:pointer;transition:all .2s;white-space:nowrap}
+.cap-btn:hover,.cap-btn.on{background:#00ff8812;border-color:#00ff88;color:#00ff88}
+.cap-inp{background:#05080d;border:1px solid #152535;color:#00ff88;padding:6px 10px;border-radius:6px;font-size:12px;font-family:'Share Tech Mono',monospace;width:120px;outline:none}
+.cap-inp:focus{border-color:#00ff88;box-shadow:0 0 6px #00ff8828}
+
+/* ── CAT TABS ── */
+.cat-scroll{display:flex;gap:6px;margin-bottom:13px;flex-wrap:wrap}
+.cat-tab{padding:5px 11px;border-radius:6px;border:1px solid #152535;background:#05080d;color:#4a6a88;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.cat-tab:hover{border-color:#2a4a6a;color:#8ab0c8}
+.cat-tab.on{border-color:var(--c);color:var(--c);background:var(--cb)}
+.cat-bdg{background:var(--c);color:#000;border-radius:50%;width:15px;height:15px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+
+/* ── ASSET GRID ── */
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:14px}
+.ac{background:#080e17;border:1px solid #152535;border-radius:9px;padding:12px;cursor:pointer;transition:all .18s;position:relative}
+.ac:hover{border-color:#2a4a6a;transform:translateY(-1px)}
+.ac.sel{border-color:var(--ac);box-shadow:0 0 12px var(--ag)}
+.ac.info-card{border-style:dashed;cursor:default}
+.ac-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
+.ac-icon{font-size:19px;line-height:1}
+.ac-chk{width:17px;height:17px;border-radius:50%;border:2px solid var(--ac,#2a4a6a);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;transition:all .18s;flex-shrink:0}
+.ac.sel .ac-chk{background:var(--ac);color:#000}
+.ac-name{font-size:12px;font-weight:700;color:#c0d8f0;margin-bottom:3px;line-height:1.25}
+.ac-desc{font-size:10px;color:#3a5a7a;margin-bottom:7px;font-family:'Share Tech Mono',monospace;line-height:1.35}
+.ac-row{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.ac-risk{font-size:9px;padding:2px 5px;border-radius:3px;font-weight:700;letter-spacing:.4px;line-height:1.4}
+.ac-pct{font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:700}
+.ac-link{font-size:9px;color:#2a4a6a;text-decoration:none;display:block;margin-top:5px;font-family:'Share Tech Mono',monospace}
+.ac-link:hover{color:#5a8ab0}
+.up{color:#00ff88}.dn{color:#ff4444}.nu{color:#ce93d8}
+
+/* ── INFO BANNER ── */
+.info-banner{background:#0e0a1e;border:1px solid #2a1a4a;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#8a6ab8;font-family:'Share Tech Mono',monospace;line-height:1.6}
+
+/* ── TIP BOX ── */
+.tip-box{background:#05080d;border:1px solid #152535;border-radius:7px;padding:9px 13px;margin-bottom:13px;font-size:12px;color:#4a6a88;font-family:'Share Tech Mono',monospace;line-height:1.6}
+
+/* ── SPLIT ── */
+.split-box{background:#080e17;border:1px solid #152535;border-radius:10px;padding:16px;margin-bottom:16px}
+.split-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.split-tot{font-family:'Share Tech Mono',monospace;font-size:13px;color:#ffd700}
+.split-row{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap}
+.split-lbl{width:105px;font-size:12px;font-weight:600;color:#a0c0d8;flex-shrink:0;line-height:1.2}
+.split-slider{flex:1;min-width:70px;-webkit-appearance:none;height:3px;border-radius:2px;background:#152535;outline:none}
+.split-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#00ff88;cursor:pointer;box-shadow:0 0 6px #00ff8868}
+.split-p{font-family:'Share Tech Mono',monospace;font-size:11px;color:#00ff88;width:34px;text-align:right;flex-shrink:0}
+.split-amt{font-family:'Share Tech Mono',monospace;font-size:10px;color:#4a6a88;width:85px;text-align:right;flex-shrink:0}
+
+/* ── CTA ── */
+.cta{width:100%;padding:14px;background:linear-gradient(120deg,#74acdf,#00ff88);color:#000;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;border:none;border-radius:9px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all .2s;margin-bottom:16px}
+.cta:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px #00ff8838}
+.cta:disabled{background:#0e1f32;color:#2a4a6a;cursor:not-allowed}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:32px;font-family:'Share Tech Mono',monospace;color:#2a4a6a}
+.dot{animation:blink 1.1s infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── RESULT ── */
+.result{background:#080e17;border:1px solid #1a3a5a;border-radius:13px;padding:20px;margin-bottom:20px;animation:si .35s ease}
+@keyframes si{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+.rs{background:#05080d;border:1px solid #152535;border-radius:8px;padding:12px;text-align:center}
+.rs-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#2a4a6a;font-family:'Share Tech Mono',monospace;margin-bottom:4px}
+.rs-val{font-family:'Share Tech Mono',monospace;font-size:17px;font-weight:700}
+.vg{color:#00ff88}.vl{color:#ff4444}.vn{color:#ffd700}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:11px;margin-bottom:16px}
+.tbl th{text-align:left;padding:6px 8px;color:#2a4a6a;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid #0e1f32}
+.tbl td{padding:8px;border-bottom:1px solid #080e17;color:#7a9ab8}
+
+/* ── AI ── */
+.ai-hdr{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.ai-badge{background:#74acdf15;border:1px solid #74acdf40;color:#74acdf;font-size:10px;letter-spacing:2px;padding:3px 8px;border-radius:4px;font-family:'Share Tech Mono',monospace}
+.ai-txt{font-size:14px;line-height:1.75;color:#c0d8f0;white-space:pre-wrap}
+
+/* ── RESET ── */
+.reset-btn{background:transparent;border:1px solid #1a3a5a;color:#4a6a88;padding:8px 16px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;transition:all .2s;margin-top:11px}
+.reset-btn:hover{border-color:#4a6a88;color:#8ab0c8}
+
+/* ── NOTICIAS ── */
+.news-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.nf-btn{padding:5px 12px;border-radius:20px;border:1px solid #152535;background:#05080d;color:#4a6a88;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;font-family:'Rajdhani',sans-serif}
+.nf-btn:hover{border-color:#2a4a6a;color:#8ab0c8}
+.nf-btn.on{border-color:#00ff88;color:#00ff88;background:#00ff8810}
+.news-load-btn{width:100%;padding:12px;background:linear-gradient(120deg,#0e1f32,#152535);color:#74acdf;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;border:1px solid #1a3a5a;border-radius:9px;cursor:pointer;letter-spacing:1px;transition:all .2s;margin-bottom:16px}
+.news-load-btn:hover:not(:disabled){background:linear-gradient(120deg,#1a3a5a,#0e2a3a);border-color:#74acdf}
+.news-load-btn:disabled{opacity:.5;cursor:not-allowed}
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:11px;margin-bottom:16px}
+.news-card{background:#080e17;border:1px solid #152535;border-radius:10px;padding:14px;transition:all .2s;position:relative;overflow:hidden}
+.news-card:hover{border-color:#2a4a6a;transform:translateY(-1px)}
+.news-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.nc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:7px}
+.nc-cat{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-family:'Share Tech Mono',monospace;flex-shrink:0}
+.nc-impact{font-size:9px;padding:2px 5px;border-radius:3px;font-weight:700;letter-spacing:.5px;font-family:'Share Tech Mono',monospace}
+.nc-title{font-size:13px;font-weight:700;color:#d0e4f4;margin-bottom:6px;line-height:1.35}
+.nc-summary{font-size:12px;color:#5a7a9a;line-height:1.55;margin-bottom:9px}
+.nc-footer{display:flex;justify-content:space-between;align-items:center}
+.nc-source{font-size:10px;color:#3a5a7a;font-family:'Share Tech Mono',monospace}
+.nc-sent{font-size:10px;font-weight:700;font-family:'Share Tech Mono',monospace}
+.sent-pos{color:#00ff88}.sent-neg{color:#ff4444}.sent-neu{color:#ffd700}
+.news-loading{text-align:center;padding:44px 20px;font-family:'Share Tech Mono',monospace;color:#2a4a6a}
+.news-empty{text-align:center;padding:36px 20px;color:#2a4a6a;font-size:13px}
+.news-ts{font-size:10px;color:#2a4a6a;font-family:'Share Tech Mono',monospace;text-align:right;margin-bottom:10px}
+
+/* ── FOOTER APORTE ── */
+.footer-aporte{background:linear-gradient(135deg,#080e17,#0a1520);border:1px solid #1a3a5a;border-radius:12px;padding:18px;margin-bottom:16px;text-align:center}
+.footer-aporte h3{color:#ffd700;font-size:16px;margin-bottom:6px}
+.footer-aporte p{color:#4a6a88;font-size:12px;font-family:'Share Tech Mono',monospace;margin-bottom:12px;line-height:1.6}
+.footer-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ── DISC ── */
+.disc{text-align:center;font-size:10px;color:#1a3a5a;padding:14px 0 8px;font-family:'Share Tech Mono',monospace;line-height:1.7}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .res-stats{grid-template-columns:1fr 1fr}
+  .ag{grid-template-columns:1fr 1fr}
+  .hdr h1{font-size:24px}
+  .tbl{font-size:10px}
+  .tbl td,.tbl th{padding:5px 4px}
+  .cap-row{flex-direction:column;align-items:flex-start}
+  .sponsor-bar{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-badge">⟨ simulador financiero argentino ⟩</div>
+    <h1>InvertiPlay AR 🇦🇷</h1>
+    <p>Armá tu cartera real — ¿cuánto hubieras ganado ayer?</p>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker"><div class="tick-scroll" id="ticker"></div></div>
+
+  <!-- MAIN TABS -->
+  <div class="main-tabs">
+    <button class="main-tab on" onclick="switchTab('simulador')">📊 Simulador</button>
+    <button class="main-tab" onclick="switchTab('noticias')">📰 Noticias del día</button>
+  </div>
+
+  <!-- TAB SIMULADOR -->
+  <div id="tab-simulador">
+
+    <!-- CAPITAL -->
+    <div class="cap-box">
+      <div class="sec-lbl">// capital disponible</div>
+      <div class="cap-row" id="capitalRow">
+        <button class="cap-btn" onclick="setCapital(50000)">$50.000</button>
+        <button class="cap-btn on" onclick="setCapital(100000)">$100.000</button>
+        <button class="cap-btn" onclick="setCapital(500000)">$500.000</button>
+        <button class="cap-btn" onclick="setCapital(1000000)">$1.000.000</button>
+        <input class="cap-inp" type="number" placeholder="Otro monto..." oninput="setCapitalCustom(this.value)" id="capInp"/>
+        <span style="color:#4a6a88;font-size:11px">ARS</span>
+      </div>
+    </div>
+
+    <!-- CAT TABS -->
+    <div class="sec-lbl">// elegí activos · <span id="todayLbl"></span></div>
+    <div class="cat-scroll" id="catTabs"></div>
+
+    <!-- INFO BANNER (para plataformas) -->
+    <div id="infoBanner" style="display:none" class="info-banner">
+      💻 <strong>Plataformas recomendadas para invertir en Argentina</strong> — referencias informativas, sin variación diaria simulable. Hacé clic en los links para conocerlas.<br/><br/>
+      <strong>Regulación:</strong> Brokers habilitados por CNV. Fintech (Mercado Pago, Ualá, Naranja X) reguladas por BCRA. Cripto: legal pero sin regulación estatal.
+    </div>
+
+    <!-- GRID ACTIVOS -->
+    <div class="ag" id="assetsGrid"></div>
+
+    <!-- TIP -->
+    <div class="tip-box" id="tipBox" style="display:none"></div>
+
+    <!-- SLIDERS -->
+    <div class="split-box" id="splitBox" style="display:none">
+      <div class="split-hdr">
+        <div class="sec-lbl" style="margin-bottom:0">// distribuí tu capital</div>
+        <div class="split-tot" id="splitTot">100% asignado</div>
+      </div>
+      <div id="splitRows"></div>
+    </div>
+
+    <!-- BOTÓN SIMULAR -->
+    <button class="cta" id="ctaBtn" onclick="simulate()" disabled>▶ Simular inversión</button>
+    <div class="loading" id="simLoading" style="display:none">
+      <div>Calculando rendimientos<span class="dot">...</span></div>
+      <div style="margin-top:8px;font-size:11px">consultando analista IA</div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="result" id="resultPanel" style="display:none"></div>
+
+  </div><!-- /tab-simulador -->
+
+  <!-- TAB NOTICIAS -->
+  <div id="tab-noticias" style="display:none">
+    <div class="news-filters" id="newsFilters"></div>
+    <button class="news-load-btn" id="newsLoadBtn" onclick="fetchNews(currentNewsTopic)">
+      🔄 Cargar noticias en tiempo real
+    </button>
+    <div class="news-loading" id="newsLoading" style="display:none">
+      <div>Buscando en medios financieros argentinos<span class="dot">...</span></div>
+      <div style="font-size:11px;margin-top:8px">Infobae · Ámbito · Cronista · iProfesional · La Nación</div>
+    </div>
+    <div class="news-empty" id="newsEmpty">
+      Hacé clic en "Cargar noticias" para ver las últimas novedades financieras de Argentina en tiempo real.
+    </div>
+    <div id="newsTs" class="news-ts" style="display:none"></div>
+    <div class="news-grid" id="newsGrid"></div>
+  </div>
+
+  <!-- FOOTER APORTE -->
+  <div class="footer-aporte">
+    <h3>💛 ¿Aprendiste algo nuevo hoy?</h3>
+    <p>InvertiPlay AR es gratuito y sin publicidad.<br/>
+    Si te fue útil podés contribuir al mantenimiento del sitio o contactarnos para sponsors y publicidad.</p>
+    <div class="footer-btns">
+      <a href="https://mpago.la/1LHyBwV" target="_blank" rel="noopener" class="btn-aporte">💙 Hacer un aporte voluntario</a>
+      <a href="mailto:invertiplayar@gmail.com?subject=Consulta%20sponsor%20InvertiPlay%20AR" class="btn-sponsor">⭐ Consultar por sponsoreo</a>
+    </div>
+    <div class="visit-bar" style="margin-top:14px;justify-content:center">
+      <span class="visit-dot"></span>
+      <span style="color:#4a6a88">Visitas hoy:</span>
+      <span class="visit-count" id="visitCount">cargando...</span>
+      <span style="color:#2a4a6a">|</span>
+      <span style="color:#4a6a88">Total:</span>
+      <span class="visit-count" id="visitTotal">—</span>
+    </div>
+  </div>
+
+  <div class="disc">
+    ⚠ Variaciones ilustrativas basadas en precios reales recientes · Solo educativo · No asesoramiento financiero<br/>
+    Para invertir dinero real consultá un asesor matriculado (CNV) · Los activos tienen riesgos reales de pérdida
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════
+//  DATOS
+// ══════════════════════════════════════════════
+const CATEGORIES = [
+  {id:"ahorro",     label:"💰 Ahorro / Renta Fija",    color:"#74acdf"},
+  {id:"acciones",   label:"🏛️ Acciones AR",             color:"#ffd700"},
+  {id:"energia",    label:"🛢️ Vaca Muerta / Energía",   color:"#ff9800"},
+  {id:"cedears",    label:"🌎 CEDEARs",                 color:"#a8d8ea"},
+  {id:"bancos",     label:"🏦 Cuentas / Bancos",        color:"#80cbc4"},
+  {id:"plataformas",label:"💻 Plataformas Online",      color:"#ce93d8"},
+  {id:"crypto",     label:"₿ Cripto",                   color:"#f7931a"},
+  {id:"dolares",    label:"💵 Dólares",                 color:"#00ff88"},
+];
+
+const ASSETS = [
+  {id:"pf_nacion",    shortName:"PF Banco Nación",    name:"Plazo Fijo Banco Nación (TNA 37%)", icon:"🏦", cat:"ahorro",      color:"#74acdf", pct:0.101, desc:"TNA 37% — 30 días mínimo",                       risk:"Muy bajo",    currency:"ARS", url:"https://www.bna.com.ar"},
+  {id:"pf_uva",       shortName:"PF UVA",             name:"Plazo Fijo UVA (CER)",              icon:"📊", cat:"ahorro",      color:"#5bb8f5", pct:0.28,  desc:"Ajustado por inflación — mín 90 días",           risk:"Bajo",        currency:"ARS", url:"https://www.bna.com.ar"},
+  {id:"lecap_s31",    shortName:"LECAP S31E6",        name:"LECAP S31E6 — Letra Tesoro",        icon:"📄", cat:"ahorro",      color:"#ce93d8", pct:0.095, desc:"Letra del Tesoro cap. TNA ~35%",                 risk:"Bajo",        currency:"ARS", url:"https://www.argentina.gob.ar"},
+  {id:"lecap_s18",    shortName:"LECAP S18J5",        name:"LECAP S18J5 — Letra Tesoro",        icon:"📋", cat:"ahorro",      color:"#b39ddb", pct:0.088, desc:"Letra corta, TNA ~32%",                          risk:"Bajo",        currency:"ARS", url:"https://www.argentina.gob.ar"},
+  {id:"letes_usd",    shortName:"LETES USD",          name:"LETES en dólares (Tesoro)",         icon:"🏛️", cat:"ahorro",      color:"#80cbc4", pct:0.019, desc:"Letras soberanas en USD",                        risk:"Medio",       currency:"USD", url:"https://www.argentina.gob.ar"},
+  {id:"bono_al30",    shortName:"Bono AL30",          name:"Bono AL30 — Soberano USD",          icon:"📜", cat:"ahorro",      color:"#4dd0e1", pct:0.44,  desc:"Bono soberano hard dollar",                      risk:"Alto",        currency:"USD", url:"https://rava.com"},
+  {id:"bono_gd30",    shortName:"Bono GD30",          name:"Bono GD30 — Global USD",            icon:"📃", cat:"ahorro",      color:"#4fc3f7", pct:0.61,  desc:"Bono global con ley NY",                         risk:"Alto",        currency:"USD", url:"https://rava.com"},
+  {id:"on_pampa",     shortName:"ON Pampa",           name:"ON Pampa Energía (USD)",            icon:"💡", cat:"ahorro",      color:"#aed581", pct:0.022, desc:"Obligación Negociable empresa",                  risk:"Medio",       currency:"USD", url:"https://rava.com"},
+  {id:"on_ypf",       shortName:"ON YPF",             name:"ON YPF (USD 2026)",                 icon:"⛽", cat:"ahorro",      color:"#ffcc02", pct:0.031, desc:"ON corporativa YPF hard dollar",                 risk:"Medio-alto",  currency:"USD", url:"https://rava.com"},
+  {id:"fci_mercado",  shortName:"FCI Mercado Pago",  name:"Cuenta Remunerada Mercado Pago",    icon:"💚", cat:"ahorro",      color:"#00b1ea", pct:0.082, desc:"Rinde ~30% TNA — instantáneo",                  risk:"Muy bajo",    currency:"ARS", url:"https://www.mercadopago.com.ar"},
+  {id:"merval",       shortName:"Merval",             name:"Merval — Índice BYMA",              icon:"📈", cat:"acciones",    color:"#ffd700", pct:1.82,  desc:"Índice bursátil argentino",                      risk:"Alto",        currency:"ARS", url:"https://open.bymadata.com.ar"},
+  {id:"ggal",         shortName:"GGAL",               name:"Grupo Galicia (GGAL)",              icon:"🏧", cat:"acciones",    color:"#ffb300", pct:2.45,  desc:"Banco líder — alta volatilidad",                 risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"bma",          shortName:"BMA",                name:"Banco Macro (BMA)",                 icon:"🏦", cat:"acciones",    color:"#ffa000", pct:1.93,  desc:"Banco privado — muy operado",                    risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"pamp",         shortName:"PAMP",               name:"Pampa Energía (PAMP)",              icon:"⚡", cat:"acciones",    color:"#aed581", pct:3.12,  desc:"Energía eléctrica, gas y petróleo",              risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"teco2",        shortName:"TECO2",              name:"Telecom Argentina (TECO2)",         icon:"📡", cat:"acciones",    color:"#81d4fa", pct:-0.45, desc:"Telecomunicaciones",                             risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"come",         shortName:"COME",               name:"Sociedad Comercial del Plata",      icon:"🏗️", cat:"acciones",    color:"#ffab91", pct:1.20,  desc:"Holding diversificado",                          risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"alua",         shortName:"ALUA",               name:"Aluar Aluminio (ALUA)",             icon:"🔩", cat:"acciones",    color:"#b0bec5", pct:-1.10, desc:"Mayor productora aluminio del país",             risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"txar",         shortName:"TXAR",               name:"Ternium Argentina (TXAR)",          icon:"🏭", cat:"acciones",    color:"#90a4ae", pct:0.88,  desc:"Acería — siderurgia",                            risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"moli",         shortName:"MOLI",               name:"Molinos Río de la Plata (MOLI)",    icon:"🌾", cat:"acciones",    color:"#d7ccc8", pct:0.35,  desc:"Alimentos — estable",                            risk:"Medio-alto",  currency:"ARS", url:"https://rava.com"},
+  {id:"supv",         shortName:"SUPV",               name:"Supervielle (SUPV)",                icon:"🏛️", cat:"acciones",    color:"#ef9a9a", pct:1.55,  desc:"Banco mediano",                                  risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"ypf",          shortName:"YPF",                name:"YPF (BYMA)",                        icon:"⛽", cat:"energia",     color:"#ffcc02", pct:-0.78, desc:"Petrolera estatal — Vaca Muerta",                risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"vista",        shortName:"VISTA",              name:"Vista Energy (VIST)",               icon:"🛢️", cat:"energia",     color:"#ff9800", pct:4.21,  desc:"Pura Vaca Muerta — ADR NYSE",                    risk:"Muy alto",    currency:"USD", url:"https://rava.com"},
+  {id:"pan",          shortName:"PAN American",       name:"Pan American Energy (PAME)",        icon:"🔥", cat:"energia",     color:"#ffa726", pct:2.10,  desc:"Petróleo no convencional",                       risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"tecpetrol",    shortName:"TecPetrol",          name:"TecPetrol (TECPETROL)",             icon:"⚙️", cat:"energia",     color:"#ff7043", pct:1.75,  desc:"Producción shale gas y petróleo",                risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"metr",         shortName:"MetroGAS",           name:"MetroGAS (METR)",                   icon:"🔵", cat:"energia",     color:"#42a5f5", pct:1.44,  desc:"Distribuidora de gas — regulada",                risk:"Medio-alto",  currency:"ARS", url:"https://rava.com"},
+  {id:"tgno4",        shortName:"TGN",                name:"TGN — Transportadora Gas Norte",    icon:"🚰", cat:"energia",     color:"#26c6da", pct:2.88,  desc:"Transporte gas natural",                         risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"tgsu2",        shortName:"TGS",                name:"TGS — Transportadora Gas Sur",      icon:"🏭", cat:"energia",     color:"#00acc1", pct:1.95,  desc:"Gas + NGL (Petróleo líquido)",                   risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"c_aapl",       shortName:"CEDEAR AAPL",        name:"CEDEAR Apple (AAPL)",               icon:"🍎", cat:"cedears",     color:"#a8d8ea", pct:1.10,  desc:"Equivale a acción Apple en ARS",                 risk:"Medio-alto",  currency:"ARS", url:"https://rava.com"},
+  {id:"c_msft",       shortName:"CEDEAR MSFT",        name:"CEDEAR Microsoft (MSFT)",           icon:"🪟", cat:"cedears",     color:"#7fb3d3", pct:0.63,  desc:"Equivale a acción MSFT en ARS",                  risk:"Medio-alto",  currency:"ARS", url:"https://rava.com"},
+  {id:"c_nvda",       shortName:"CEDEAR NVDA",        name:"CEDEAR NVIDIA (NVDA)",              icon:"🎮", cat:"cedears",     color:"#76b900", pct:3.84,  desc:"Equivale a acción NVDA en ARS",                  risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"c_amzn",       shortName:"CEDEAR AMZN",        name:"CEDEAR Amazon (AMZN)",              icon:"📦", cat:"cedears",     color:"#ff9900", pct:0.92,  desc:"Equivale a acción Amazon en ARS",                risk:"Medio-alto",  currency:"ARS", url:"https://rava.com"},
+  {id:"c_googl",      shortName:"CEDEAR GOOGL",       name:"CEDEAR Alphabet (GOOGL)",           icon:"🔍", cat:"cedears",     color:"#4285f4", pct:1.45,  desc:"Equivale a acción Alphabet en ARS",              risk:"Medio-alto",  currency:"ARS", url:"https://rava.com"},
+  {id:"c_meta",       shortName:"CEDEAR META",        name:"CEDEAR Meta (META)",                icon:"👤", cat:"cedears",     color:"#0668e1", pct:2.10,  desc:"Equivale a acción Meta en ARS",                  risk:"Alto",        currency:"ARS", url:"https://rava.com"},
+  {id:"c_tsla",       shortName:"CEDEAR TSLA",        name:"CEDEAR Tesla (TSLA)",               icon:"⚡", cat:"cedears",     color:"#cc0000", pct:-1.35, desc:"Equivale a acción Tesla en ARS",                 risk:"Muy alto",    currency:"ARS", url:"https://rava.com"},
+  {id:"c_spy",        shortName:"CEDEAR SPY",         name:"CEDEAR SPY (S&P 500 ETF)",          icon:"📊", cat:"cedears",     color:"#00bfff", pct:0.35,  desc:"CEDEAR del ETF más operado del mundo",           risk:"Medio",       currency:"ARS", url:"https://rava.com"},
+  {id:"c_qqqm",       shortName:"CEDEAR QQQ",         name:"CEDEAR QQQ (Nasdaq ETF)",           icon:"💻", cat:"cedears",     color:"#7b68ee", pct:0.72,  desc:"CEDEAR del Nasdaq 100",                          risk:"Medio-alto",  currency:"ARS", url:"https://rava.com"},
+  {id:"cuenta_mp",    shortName:"Mercado Pago",       name:"Cuenta Remunerada Mercado Pago",    icon:"💚", cat:"bancos",      color:"#00b1ea", pct:0.082, desc:"~30% TNA — acreditación inmediata",              risk:"Muy bajo",    currency:"ARS", url:"https://www.mercadopago.com.ar"},
+  {id:"cuenta_nar",   shortName:"Naranja X",          name:"Cuenta Remunerada Naranja X",       icon:"🟠", cat:"bancos",      color:"#ff6d00", pct:0.090, desc:"~33% TNA — desde $1 peso",                       risk:"Muy bajo",    currency:"ARS", url:"https://www.naranjax.com"},
+  {id:"cuenta_uala",  shortName:"Ualá",               name:"Cuenta Remunerada Ualá",            icon:"🔵", cat:"bancos",      color:"#3f51b5", pct:0.085, desc:"~31% TNA — tarjeta Mastercard",                  risk:"Muy bajo",    currency:"ARS", url:"https://www.uala.com.ar"},
+  {id:"cuenta_bro",   shortName:"Brubank",            name:"Cuenta Ahorro Brubank",             icon:"🟣", cat:"bancos",      color:"#7c4dff", pct:0.096, desc:"~35% TNA — banco digital puro",                  risk:"Muy bajo",    currency:"ARS", url:"https://www.brubank.com.ar"},
+  {id:"pf_galicia",   shortName:"PF Galicia",         name:"Plazo Fijo Banco Galicia",          icon:"🏧", cat:"bancos",      color:"#ffb300", pct:0.108, desc:"~39.5% TNA — banco privado líder",               risk:"Muy bajo",    currency:"ARS", url:"https://www.bancogalicia.com"},
+  {id:"pf_macro",     shortName:"PF Macro",           name:"Plazo Fijo Banco Macro",            icon:"🏦", cat:"bancos",      color:"#ffa000", pct:0.104, desc:"~38% TNA — amplia red sucursales",               risk:"Muy bajo",    currency:"ARS", url:"https://www.macro.com.ar"},
+  {id:"pf_santander", shortName:"PF Santander",       name:"Plazo Fijo Santander",              icon:"🔴", cat:"bancos",      color:"#e53935", pct:0.101, desc:"~37% TNA — banco internacional",                 risk:"Muy bajo",    currency:"ARS", url:"https://www.santander.com.ar"},
+  {id:"pf_bbva",      shortName:"PF BBVA",            name:"Plazo Fijo BBVA",                   icon:"🔵", cat:"bancos",      color:"#1565c0", pct:0.104, desc:"~38% TNA — online 24/7",                         risk:"Muy bajo",    currency:"ARS", url:"https://www.bbva.com.ar"},
+  {id:"iol",          shortName:"InvertirOnline",     name:"InvertirOnline (IOL)",              icon:"💻", cat:"plataformas", color:"#ce93d8", pct:0,     desc:"Broker online líder — acciones, bonos, CEDEARs, FCI", risk:"Según activo", currency:"ARS", url:"https://www.invertironline.com", isInfo:true},
+  {id:"rava",         shortName:"Rava Bursátil",      name:"Rava Bursátil",                     icon:"📱", cat:"plataformas", color:"#b39ddb", pct:0,     desc:"Broker clásico — acciones y bonos BYMA",         risk:"Según activo", currency:"ARS", url:"https://www.rava.com", isInfo:true},
+  {id:"balanz",       shortName:"Balanz",             name:"Balanz Capital",                    icon:"⚖️", cat:"plataformas", color:"#9575cd", pct:0,     desc:"Broker + asesoría — muy completo",               risk:"Según activo", currency:"ARS", url:"https://balanz.com", isInfo:true},
+  {id:"ppinversion",  shortName:"PPI",                name:"Portfolio Personal Inversiones",     icon:"📊", cat:"plataformas", color:"#7e57c2", pct:0,     desc:"App móvil potente — CEDEARs, bonos, FCI",        risk:"Según activo", currency:"ARS", url:"https://www.portfoliopersonal.com", isInfo:true},
+  {id:"cocos",        shortName:"Cocos Capital",      name:"Cocos Capital",                     icon:"🥥", cat:"plataformas", color:"#a1887f", pct:0,     desc:"Fintech nueva — UX excelente, comisiones bajas", risk:"Según activo", currency:"ARS", url:"https://cocos.capital", isInfo:true},
+  {id:"bull",         shortName:"Bull Market",        name:"Bull Market Brokers",               icon:"🐂", cat:"plataformas", color:"#8d6e63", pct:0,     desc:"Broker con educación financiera gratuita",        risk:"Según activo", currency:"ARS", url:"https://www.bullmarketbrokers.com", isInfo:true},
+  {id:"lemon",        shortName:"Lemon Cash",         name:"Lemon Cash (crypto + ARS)",         icon:"🍋", cat:"plataformas", color:"#f9d71c", pct:0,     desc:"Cripto + tarjeta — comisiones bajas",            risk:"Según activo", currency:"ARS", url:"https://www.lemon.me", isInfo:true},
+  {id:"binance_ar",   shortName:"Binance AR",         name:"Binance (con peso AR)",             icon:"🔶", cat:"plataformas", color:"#f0b90b", pct:0,     desc:"Exchange global — P2P en pesos, USDT, cripto",   risk:"Según activo", currency:"ARS", url:"https://www.binance.com", isInfo:true},
+  {id:"btc",          shortName:"Bitcoin",            name:"Bitcoin (BTC)",                     icon:"₿",  cat:"crypto",      color:"#f7931a", pct:1.73,  desc:"La cripto original — USD",                       risk:"Muy alto",    currency:"USD", url:"https://www.binance.com"},
+  {id:"eth",          shortName:"Ethereum",           name:"Ethereum (ETH)",                    icon:"💎", cat:"crypto",      color:"#627eea", pct:-1.29, desc:"Smart contracts — USD",                          risk:"Muy alto",    currency:"USD", url:"https://www.binance.com"},
+  {id:"sol",          shortName:"Solana",             name:"Solana (SOL)",                      icon:"☀️", cat:"crypto",      color:"#9945ff", pct:2.34,  desc:"Blockchain rápida y barata",                     risk:"Muy alto",    currency:"USD", url:"https://www.binance.com"},
+  {id:"bnb",          shortName:"BNB",                name:"BNB (Binance Coin)",                icon:"🔶", cat:"crypto",      color:"#f0b90b", pct:0.88,  desc:"Token Binance — muy operado",                    risk:"Muy alto",    currency:"USD", url:"https://www.binance.com"},
+  {id:"xrp",          shortName:"XRP",                name:"XRP (Ripple)",                      icon:"🔷", cat:"crypto",      color:"#346aa9", pct:1.12,  desc:"Pagos internacionales",                          risk:"Muy alto",    currency:"USD", url:"https://www.binance.com"},
+  {id:"usdt_p2p",     shortName:"USDT P2P",           name:"USDT comprado P2P (ARS)",           icon:"🟢", cat:"crypto",      color:"#26a17b", pct:0.31,  desc:"Tether — reserva de valor en pesos",             risk:"Bajo-medio",  currency:"ARS", url:"https://p2p.binance.com"},
+  {id:"dai_ar",       shortName:"DAI en AR",          name:"DAI (stablecoin descentralizado)",  icon:"🔵", cat:"crypto",      color:"#f4b731", pct:0.25,  desc:"Stablecoin = 1 USD descentralizado",             risk:"Bajo-medio",  currency:"ARS", url:"https://www.binance.com"},
+  {id:"btc_ar",       shortName:"BTC en ARS",         name:"Bitcoin comprado en ARS (P2P)",     icon:"🟠", cat:"crypto",      color:"#e65100", pct:2.12,  desc:"BTC vía P2P en pesos argentinos",                risk:"Muy alto",    currency:"ARS", url:"https://p2p.binance.com"},
+  {id:"dolar_blue",   shortName:"Dólar Blue",         name:"Dólar Blue (informal)",             icon:"💵", cat:"dolares",     color:"#00ff88", pct:0.39,  desc:"Mercado paralelo — sin límite",                  risk:"Medio",       currency:"ARS", url:""},
+  {id:"dolar_mep",    shortName:"Dólar MEP",          name:"Dólar MEP — Financiero (legal)",    icon:"📈", cat:"dolares",     color:"#00e676", pct:0.24,  desc:"Legal — vía compra/venta de bonos",              risk:"Bajo-medio",  currency:"ARS", url:"https://rava.com"},
+  {id:"dolar_ccl",    shortName:"Dólar CCL",          name:"Dólar CCL — Contado con Liqui",     icon:"🌐", cat:"dolares",     color:"#69f0ae", pct:0.31,  desc:"Legal — vía CEDEARs o acciones",                 risk:"Bajo-medio",  currency:"ARS", url:"https://rava.com"},
+  {id:"dolar_cripto", shortName:"Dólar Cripto",       name:"Dólar Cripto (USDT)",               icon:"🔐", cat:"dolares",     color:"#26a17b", pct:0.47,  desc:"USDT en exchanges — muy líquido",                risk:"Bajo-medio",  currency:"ARS", url:"https://www.binance.com"},
+];
+
+const RISK_COLOR = {"Muy bajo":"#74acdf","Bajo":"#00ff88","Bajo-medio":"#aed581","Medio":"#ffd700","Medio-alto":"#ffb300","Alto":"#ff6b35","Muy alto":"#ff4444","Según activo":"#ce93d8"};
+const DOLAR_BLUE = 1285;
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let capital = 100000;
+let activeCat = "ahorro";
+let selected = [];
+let alloc = {};
+let activeTab = "simulador";
+let currentNewsTopic = "general";
+let newsData = null;
+let simResult = null;
+
+// ══════════════════════════════════════════════
+//  CONTADOR DE VISITAS (localStorage simple)
+// ══════════════════════════════════════════════
+function initVisitCounter() {
+  const today = new Date().toISOString().split("T")[0];
+  let data = JSON.parse(localStorage.getItem("invertiplay_visits") || '{"total":0,"day":"","today":0}');
+  if (data.day !== today) { data.day = today; data.today = 0; }
+  data.total = (data.total || 0) + 1;
+  data.today = (data.today || 0) + 1;
+  localStorage.setItem("invertiplay_visits", JSON.stringify(data));
+  document.getElementById("visitCount").textContent = data.today.toLocaleString("es-AR");
+  document.getElementById("visitTotal").textContent = data.total.toLocaleString("es-AR");
+}
+
+// ══════════════════════════════════════════════
+//  TICKER
+// ══════════════════════════════════════════════
+function buildTicker() {
+  const tradable = ASSETS.filter(a => !a.isInfo);
+  const html = tradable.map(a => {
+    const cls = a.pct >= 0 ? "t-up" : "t-dn";
+    const sign = a.pct >= 0 ? "▲" : "▼";
+    return `<span style="margin-right:26px"><span class="${cls}">${a.icon} ${a.shortName} ${sign}${Math.abs(a.pct).toFixed(2)}%</span></span>`;
+  }).join("");
+  const el = document.getElementById("ticker");
+  el.innerHTML = html + html;
+}
+
+// ══════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById("tab-simulador").style.display = tab === "simulador" ? "" : "none";
+  document.getElementById("tab-noticias").style.display  = tab === "noticias"  ? "" : "none";
+  document.querySelectorAll(".main-tab").forEach((b,i) => {
+    b.classList.toggle("on", (i===0 && tab==="simulador") || (i===1 && tab==="noticias"));
+  });
+  if (tab === "noticias" && !newsData) fetchNews("general");
+}
+
+// ══════════════════════════════════════════════
+//  CAPITAL
+// ══════════════════════════════════════════════
+function setCapital(val) {
+  capital = val;
+  document.getElementById("capInp").value = "";
+  document.querySelectorAll(".cap-btn").forEach(b => b.classList.remove("on"));
+  const presets = [50000,100000,500000,1000000];
+  document.querySelectorAll(".cap-btn").forEach((b,i) => b.classList.toggle("on", presets[i]===val));
+  updateSplitAmounts();
+}
+function setCapitalCustom(v) {
+  capital = parseInt(v) || 0;
+  document.querySelectorAll(".cap-btn").forEach(b => b.classList.remove("on"));
+  updateSplitAmounts();
+}
+
+// ══════════════════════════════════════════════
+//  FECHA
+// ══════════════════════════════════════════════
+function buildDate() {
+  const d = new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"long",year:"numeric"});
+  document.getElementById("todayLbl").textContent = d;
+}
+
+// ══════════════════════════════════════════════
+//  CAT TABS
+// ══════════════════════════════════════════════
+function buildCatTabs() {
+  const el = document.getElementById("catTabs");
+  el.innerHTML = CATEGORIES.map(c => {
+    const cnt = selected.filter(id => ASSETS.find(a=>a.id===id)?.cat===c.id).length;
+    const on = activeCat === c.id ? "on" : "";
+    const bdg = cnt > 0 ? `<span class="cat-bdg" style="--c:${c.color}">${cnt}</span>` : "";
+    return `<button class="cat-tab ${on}" style="--c:${c.color};--cb:${c.color}15" onclick="setCat('${c.id}')">${c.label}${bdg}</button>`;
+  }).join("");
+}
+function setCat(id) {
+  activeCat = id;
+  buildCatTabs();
+  buildAssetsGrid();
+  document.getElementById("infoBanner").style.display = id === "plataformas" ? "" : "none";
+}
+
+// ══════════════════════════════════════════════
+//  ASSETS GRID
+// ══════════════════════════════════════════════
+function buildAssetsGrid() {
+  const visible = ASSETS.filter(a => a.cat === activeCat);
+  const el = document.getElementById("assetsGrid");
+  el.innerHTML = visible.map(asset => {
+    const sel = selected.includes(asset.id);
+    const selCls = sel ? "sel" : "";
+    const infoCls = asset.isInfo ? "info-card" : "";
+    const rc = RISK_COLOR[asset.risk] || "#ffd700";
+    const pctHtml = asset.isInfo
+      ? `<span style="font-size:9px;color:#3a5a7a;font-family:'Share Tech Mono'">INFO</span>`
+      : `<span class="ac-pct ${asset.pct>0?'up':asset.pct<0?'dn':'nu'}">${asset.pct>0?"▲":asset.pct<0?"▼":"—"}${Math.abs(asset.pct).toFixed(2)}%</span>`;
+    const chkHtml = asset.isInfo ? "" : `<div class="ac-chk">${sel?"✓":""}</div>`;
+    const linkHtml = asset.url ? `<a class="ac-link" href="${asset.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${asset.url.replace(/https?:\/\/(www\.)?/,"").split("/")[0]}</a>` : "";
+    const onclick = asset.isInfo ? "" : `onclick="toggleAsset('${asset.id}')"`;
+    return `<div class="ac ${selCls} ${infoCls}" style="--ac:${asset.color};--ag:${asset.color}22" ${onclick}>
+      <div class="ac-top"><span class="ac-icon">${asset.icon}</span>${chkHtml}</div>
+      <div class="ac-name">${asset.shortName}</div>
+      <div class="ac-desc">${asset.desc}</div>
+      <div class="ac-row">
+        <span class="ac-risk" style="color:${rc};background:${rc}18">${asset.risk}</span>
+        ${pctHtml}
+      </div>${linkHtml}
+    </div>`;
+  }).join("");
+}
+
+function toggleAsset(id) {
+  if (selected.includes(id)) {
+    selected = selected.filter(x => x !== id);
+  } else {
+    selected.push(id);
+  }
+  rebalanceAlloc();
+  buildCatTabs();
+  buildAssetsGrid();
+  buildTipBox();
+  buildSplitSliders();
+  updateCTA();
+}
+
+function rebalanceAlloc() {
+  if (!selected.length) { alloc = {}; return; }
+  const even = Math.floor(100 / selected.length);
+  const rem  = 100 - even * selected.length;
+  alloc = {};
+  selected.forEach((a,i) => alloc[a] = even + (i===0?rem:0));
+}
+
+// ══════════════════════════════════════════════
+//  TIP BOX
+// ══════════════════════════════════════════════
+function buildTipBox() {
+  const el = document.getElementById("tipBox");
+  if (!selected.length) { el.style.display="none"; return; }
+  const names = selected.map(id => { const a=ASSETS.find(x=>x.id===id); return a?`${a.icon} ${a.shortName}`:""; }).join(" · ");
+  const hint = selected.length===1 ? " — 100% del capital" : " — usá los sliders para distribuir";
+  el.textContent = `✅ Seleccionados (${selected.length}): ${names}${hint}`;
+  el.style.display = "";
+}
+
+// ══════════════════════════════════════════════
+//  SPLIT SLIDERS
+// ══════════════════════════════════════════════
+function buildSplitSliders() {
+  const box = document.getElementById("splitBox");
+  if (selected.length < 2) { box.style.display="none"; return; }
+  box.style.display = "";
+  const rows = document.getElementById("splitRows");
+  rows.innerHTML = selected.map(id => {
+    const asset = ASSETS.find(a=>a.id===id);
+    const p = alloc[id]||0;
+    const amt = Math.round(capital*p/100);
+    return `<div class="split-row">
+      <div class="split-lbl">${asset.icon} ${asset.shortName}</div>
+      <input type="range" min="0" max="100" value="${p}" class="split-slider" oninput="updateAlloc('${id}',this.value)"/>
+      <span class="split-p" id="sp_${id}">${p}%</span>
+      <span class="split-amt" id="sa_${id}">$${amt.toLocaleString("es-AR")}</span>
+    </div>`;
+  }).join("");
+  updateSplitTot();
+}
+
+function updateAlloc(id, val) {
+  val = parseInt(val);
+  const others = selected.filter(x=>x!==id);
+  const remaining = 100 - val;
+  const otherTotal = others.reduce((s,x)=>s+(alloc[x]||0),0);
+  alloc[id] = val;
+  if (otherTotal > 0) {
+    others.forEach(x => alloc[x] = Math.round((alloc[x]/otherTotal)*remaining));
+  } else {
+    const ev = Math.floor(remaining/(others.length||1));
+    others.forEach(x => alloc[x]=ev);
+  }
+  // update displayed values
+  selected.forEach(x => {
+    const sp = document.getElementById("sp_"+x);
+    const sa = document.getElementById("sa_"+x);
+    const slider = document.querySelector(`.split-slider[oninput*="'${x}'"]`);
+    if (sp) sp.textContent = (alloc[x]||0)+"%";
+    if (sa) sa.textContent = "$"+Math.round(capital*(alloc[x]||0)/100).toLocaleString("es-AR");
+    if (slider) slider.value = alloc[x]||0;
+  });
+  updateSplitTot();
+}
+
+function updateSplitAmounts() {
+  selected.forEach(id => {
+    const sa = document.getElementById("sa_"+id);
+    if (sa) sa.textContent = "$"+Math.round(capital*(alloc[id]||0)/100).toLocaleString("es-AR");
+  });
+}
+
+function updateSplitTot() {
+  const tot = selected.reduce((s,x)=>s+(alloc[x]||0),0);
+  document.getElementById("splitTot").textContent = tot+"% asignado";
+}
+
+function updateCTA() {
+  document.getElementById("ctaBtn").disabled = selected.length===0 || capital<=0;
+}
+
+// ══════════════════════════════════════════════
+//  SIMULACIÓN
+// ══════════════════════════════════════════════
+async function simulate() {
+  document.getElementById("ctaBtn").disabled = true;
+  document.getElementById("simLoading").style.display = "";
+  document.getElementById("resultPanel").style.display = "none";
+
+  const today = new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"long",year:"numeric"});
+  const breakdown = selected.map(id => {
+    const asset = ASSETS.find(a=>a.id===id);
+    const pct   = alloc[id]||0;
+    const inv   = capital*pct/100;
+    const gain  = asset.currency==="USD"
+      ? ((inv/DOLAR_BLUE)*asset.pct/100)*DOLAR_BLUE
+      : (inv*asset.pct)/100;
+    return {id, name:asset.name, shortName:asset.shortName, icon:asset.icon,
+            pct, invested_ars:inv, gain_ars:gain, changePct:asset.pct,
+            currency:asset.currency, risk:asset.risk};
+  });
+  const totalInvested = breakdown.reduce((s,b)=>s+b.invested_ars,0);
+  const totalGain     = breakdown.reduce((s,b)=>s+b.gain_ars,0);
+  const returnPct     = totalInvested>0?(totalGain/totalInvested)*100:0;
+  const fmtARS = n => "$"+Math.round(n).toLocaleString("es-AR");
+
+  const prompt = `Sos un analista financiero argentino experto. Hablás en castellano rioplatense con "vos/te". Sos amigable, claro, usás emojis con moderación.
+
+El usuario simuló esta inversión con datos del mercado del día anterior al ${today}. Dólar blue referencia: $${DOLAR_BLUE} ARS.
+
+Capital: ${fmtARS(capital)} ARS
+Portafolio:
+${breakdown.map(b=>`• ${b.icon} ${b.name} (${b.pct}%) — inv: ${fmtARS(b.invested_ars)} — var ayer: ${b.changePct>=0?"+":""}${b.changePct.toFixed(2)}% — resultado: ${b.gain_ars>=0?"+":""}${fmtARS(b.gain_ars)} ARS — Riesgo: ${b.risk}`).join("\n")}
+
+Resultado total: ${totalGain>=0?"GANANCIA":"PÉRDIDA"} ${fmtARS(Math.abs(totalGain))} ARS (${returnPct>=0?"+":""}${returnPct.toFixed(2)}%)
+
+Hacé un análisis en máximo 220 palabras con:
+1. 📊 Evaluación del resultado y diversificación
+2. ⭐ Mejor y peor activo del día
+3. 🇦🇷 Contexto macro argentino relevante (inflación, tipo de cambio, cepo, Vaca Muerta, tasas, etc.)
+4. 💡 Sugerencia concreta para la próxima vez
+5. Una frase breve motivadora para cerrar
+
+No menciones que sos IA. Lenguaje accesible para alguien aprendiendo a invertir.`;
+
+  let aiText = "⚠️ No se pudo obtener el análisis de IA. Revisá tu conexión.";
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
+      body: JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+    });
+    const data = await res.json();
+    aiText = data.content?.find(c=>c.type==="text")?.text || aiText;
+  } catch(e) {}
+
+  document.getElementById("simLoading").style.display = "none";
+  document.getElementById("ctaBtn").disabled = false;
+
+  const gainCls = totalGain>=0?"vg":"vl";
+  const retCls  = returnPct>=0?"vg":"vl";
+  const rows = breakdown.map(b=>`
+    <tr>
+      <td style="color:#c0d8f0">${b.icon} ${b.shortName}</td>
+      <td>${b.pct}%</td>
+      <td>${fmtARS(b.invested_ars)}</td>
+      <td class="${b.changePct>=0?"up":"dn"}">${b.changePct>=0?"▲":"▼"}${Math.abs(b.changePct).toFixed(2)}%</td>
+      <td class="${b.gain_ars>=0?"up":"dn"}">${b.gain_ars>=0?"+":""}${fmtARS(b.gain_ars)}</td>
+    </tr>`).join("");
+
+  document.getElementById("resultPanel").innerHTML = `
+    <div class="sec-lbl" style="margin-bottom:14px">// resultado · ${today}</div>
+    <div class="res-stats">
+      <div class="rs"><div class="rs-lbl">Capital</div><div class="rs-val vn">${fmtARS(totalInvested)}</div></div>
+      <div class="rs"><div class="rs-lbl">${totalGain>=0?"Ganancia":"Pérdida"}</div><div class="rs-val ${gainCls}">${totalGain>=0?"+":""}${fmtARS(Math.abs(totalGain))}</div></div>
+      <div class="rs"><div class="rs-lbl">Retorno</div><div class="rs-val ${retCls}">${returnPct>=0?"+":""}${returnPct.toFixed(2)}%</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Activo</th><th>%</th><th>Invertido</th><th>Variación</th><th>Resultado</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="ai-hdr"><span class="ai-badge">★ ANÁLISIS IA</span></div>
+    <div class="ai-txt">${aiText.replace(/</g,"&lt;")}</div>
+    <button class="reset-btn" onclick="resetSim()">↩ Simular de nuevo</button>
+  `;
+  document.getElementById("resultPanel").style.display = "";
+  document.getElementById("resultPanel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function resetSim() {
+  selected = []; alloc = {};
+  buildCatTabs(); buildAssetsGrid(); buildTipBox(); buildSplitSliders(); updateCTA();
+  document.getElementById("resultPanel").style.display="none";
+}
+
+// ══════════════════════════════════════════════
+//  NOTICIAS
+// ══════════════════════════════════════════════
+const NEWS_TOPICS = [
+  {id:"general",  label:"🌐 Todas"},
+  {id:"dolar",    label:"💵 Dólar"},
+  {id:"merval",   label:"📈 Merval"},
+  {id:"energia",  label:"🛢️ Energía"},
+  {id:"cripto",   label:"₿ Cripto"},
+  {id:"economia", label:"🇦🇷 Economía"},
+];
+const CAT_COLOR = {"dólar":"#00ff88","merval":"#ffd700","cripto":"#f7931a","energía":"#ff9800","economía":"#74acdf","bonos":"#80cbc4","internacional":"#ce93d8"};
+const IMPACT_STYLE = {"alto":"background:#ff444420;color:#ff4444","medio":"background:#ffd70020;color:#ffd700","bajo":"background:#00ff8820;color:#00ff88"};
+
+function buildNewsFilters() {
+  document.getElementById("newsFilters").innerHTML = NEWS_TOPICS.map(t =>
+    `<button class="nf-btn ${currentNewsTopic===t.id && newsData?"on":""}" onclick="fetchNews('${t.id}')" ${document.getElementById("newsLoading")?.style.display!=="none"?"disabled":""}>${t.label}</button>`
+  ).join("");
+}
+
+async function fetchNews(topic) {
+  currentNewsTopic = topic;
+  const today = new Date().toISOString().split("T")[0];
+  const todayStr = new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"long",year:"numeric"});
+
+  const queries = {
+    general: `Buscá las 6 noticias financieras y económicas más importantes de Argentina de hoy ${today}. Incluí dólar, inflación, bonos, acciones, tasas, Vaca Muerta y mercados que afecten Argentina.`,
+    dolar:   `Buscá las últimas noticias de hoy ${today} sobre dólar blue, MEP, CCL y tipo de cambio en Argentina.`,
+    merval:  `Buscá las últimas noticias de hoy ${today} sobre el Merval, acciones argentinas, CEDEARs y BYMA.`,
+    energia: `Buscá las últimas noticias de hoy ${today} sobre Vaca Muerta, YPF, petróleo y energía en Argentina.`,
+    cripto:  `Buscá las últimas noticias de hoy ${today} sobre Bitcoin, Ethereum, criptomonedas y su impacto en Argentina.`,
+    economia:`Buscá las últimas noticias de hoy ${today} sobre inflación, tasas del BCRA, bonos soberanos y economía argentina.`,
+  };
+
+  const prompt = `${queries[topic]}
+
+Respondé ÚNICAMENTE con un JSON válido sin texto extra ni markdown:
+{"titulo":"string","fecha":"${todayStr}","noticias":[{"titulo":"string máx 80 chars","resumen":"2-3 oraciones en castellano rioplatense","fuente":"nombre del medio","categoria":"dólar|merval|cripto|energía|economía|bonos|internacional","sentimiento":"positivo|negativo|neutral","impacto":"alto|medio|bajo"}]}
+
+Incluí exactamente 6 noticias relevantes y recientes.`;
+
+  document.getElementById("newsLoading").style.display = "";
+  document.getElementById("newsEmpty").style.display   = "none";
+  document.getElementById("newsGrid").innerHTML = "";
+  document.getElementById("newsTs").style.display = "none";
+  document.getElementById("newsLoadBtn").disabled = true;
+  buildNewsFilters();
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6", max_tokens:1500,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const textBlock = data.content?.find(c=>c.type==="text");
+    if (textBlock?.text) {
+      const clean = textBlock.text.replace(/```json|```/g,"").trim();
+      newsData = JSON.parse(clean);
+      newsData.topic = topic;
+      renderNews();
+    } else { throw new Error("sin texto"); }
+  } catch(e) {
+    newsData = {titulo:"Noticias",fecha:todayStr,topic,noticias:[
+      {titulo:"No se pudieron cargar las noticias en tiempo real",resumen:"Revisá tu conexión e intentá de nuevo. Las noticias se obtienen en tiempo real desde medios financieros argentinos.",fuente:"Sistema",categoria:"economía",sentimiento:"neutral",impacto:"bajo"}
+    ]};
+    renderNews();
+  }
+  document.getElementById("newsLoading").style.display = "none";
+  document.getElementById("newsLoadBtn").disabled = false;
+  buildNewsFilters();
+}
+
+function renderNews() {
+  if (!newsData) return;
+  const tsEl = document.getElementById("newsTs");
+  tsEl.textContent = `Actualizado: ${newsData.fecha} · ${newsData.noticias.length} noticias`;
+  tsEl.style.display = "";
+
+  document.getElementById("newsGrid").innerHTML = newsData.noticias.map(n => {
+    const cc = CAT_COLOR[n.categoria] || "#74acdf";
+    const imp = IMPACT_STYLE[n.impacto] || IMPACT_STYLE["bajo"];
+    const sentCls = n.sentimiento==="positivo"?"sent-pos":n.sentimiento==="negativo"?"sent-neg":"sent-neu";
+    const sentTxt = n.sentimiento==="positivo"?"▲ positivo":n.sentimiento==="negativo"?"▼ negativo":"● neutral";
+    return `<div class="news-card" style="border-color:${cc}22">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${cc}"></div>
+      <div class="nc-top">
+        <span class="nc-cat" style="color:${cc}">${n.categoria}</span>
+        <span class="nc-impact" style="${imp}">⚡ ${n.impacto}</span>
+      </div>
+      <div class="nc-title">${n.titulo}</div>
+      <div class="nc-summary">${n.resumen}</div>
+      <div class="nc-footer">
+        <span class="nc-source">📰 ${n.fuente}</span>
+        <span class="nc-sent ${sentCls}">${sentTxt}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+(function init() {
+  initVisitCounter();
+  buildDate();
+  buildTicker();
+  buildCatTabs();
+  buildAssetsGrid();
+  buildNewsFilters();
+})();
+</script>
+</body>
+</html>
