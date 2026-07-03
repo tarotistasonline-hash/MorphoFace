@@ -42,6 +42,7 @@ import { downloadPDFSummary } from "./utils/pdfGenerator";
 import { playHotspotTone, startScanningSound, stopScanningSound, playAgingSliderChangeSound, toggleAmbientMusic, isAmbientMusicPlaying } from "./utils/audioFeedback";
 import AnalysisComparer, { ScanOption } from "./components/AnalysisComparer";
 import { generateFallbackReport } from "./utils/reportGenerator";
+import GuestbookComments from "./components/GuestbookComments";
 
 const resizeImageData = (base64Str: string, maxDim: number): Promise<string> => {
   return new Promise((resolve) => {
@@ -1213,7 +1214,7 @@ export default function App() {
               title={language === "fr" ? "Soutenir le site" : language === "en" ? "Support the site" : "Apoyar el mantenimiento del sitio"}
             >
               <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400/20 animate-pulse" />
-              <span className="font-bold">{language === "fr" ? "Soutenir" : language === "en" ? "Support" : "Aportar"}</span>
+              <span className="font-bold">{language === "fr" ? "Soutenir" : language === "en" ? "Support" : "Colaboración voluntaria"}</span>
             </a>
           </div>
 
@@ -3102,49 +3103,25 @@ export default function App() {
           <FacialAnalysisGuide />
         </section>
 
-        {/* Elegant site maintenance contribution banner */}
-        <div className="bg-gradient-to-r from-stone-900 via-stone-900/90 to-stone-950 border border-stone-850/60 rounded-3xl p-6 sm:p-8 space-y-4 max-w-4xl mx-auto shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden" id="site-contribution-banner">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="space-y-2 max-w-2xl text-center md:text-left">
-            <span className="text-[9px] font-mono text-red-400 bg-red-500/10 px-2.5 py-0.5 rounded-full border border-red-500/20 uppercase font-black tracking-widest inline-flex items-center gap-1.5">
-              <Heart className="w-3 h-3 text-red-400 fill-red-400/20" />
-              <span>{language === "fr" ? "Soutien" : language === "en" ? "Support" : "Aporte voluntario"}</span>
-            </span>
-            <h3 className="text-base font-bold tracking-tight text-stone-100 font-sans">
-              {language === "fr" ? "Aidez-nous à maintenir Morphoface en ligne" : language === "en" ? "Help us keep Morphoface online" : "¿Te gustaría apoyar el mantenimiento del sitio?"}
-            </h3>
-            <p className="text-xs text-stone-400 leading-relaxed font-sans">
-              {language === "fr" 
-                ? "Morphoface fonctionne grâce à des serveurs d'IA dédiés. Si notre outil d'analyse faciale vous est utile, un don libre nous aide à payer l'infrastructure."
-                : language === "en"
-                ? "Morphoface operates using real-time dedicated AI servers. If you find value in our face readings, a small contribution helps us sustain hosting and keep services live."
-                : "Para ofrecer análisis morfopsicológicos interactivos sin publicidad, sostenemos servidores de IA activos de alta gama. Si valoras la precisión y deseas apoyarnos, puedes colaborar con el mantenimiento."}
-            </p>
-          </div>
-          <a
-            href="https://mpago.la/1LHyBwV"
-            target="_blank"
-            referrerPolicy="no-referrer"
-            className="shrink-0 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-sans font-extrabold text-xs transition-all cursor-pointer shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 uppercase tracking-wider group hover:-translate-y-0.5 duration-200"
-            id="banner-donate-btn"
-          >
-            <span>{language === "fr" ? "Contribuer" : language === "en" ? "Support" : "Aportar voluntariamente"}</span>
-            <ChevronRight className="w-4 h-4 text-stone-950 group-hover:translate-x-0.5 transition-transform" />
-          </a>
-        </div>
+        {/* Visitor Guestbook & Comments Section (Option 3 - Serverless Webhook) */}
+        <section className="mt-12" id="guestbook-comments-section">
+          <GuestbookComments language={language} />
+        </section>
 
       </main>
 
       {/* Aesthetic Site Footer */}
-      <footer className="border-t border-stone-900 bg-stone-950 text-stone-500 py-8 text-center text-xs space-y-2 mt-12" id="app-footer">
+      <footer className="border-t border-stone-900 bg-stone-950 text-stone-500 py-8 text-center text-xs space-y-3 mt-12" id="app-footer">
         <p className="font-mono text-[10px] tracking-wider text-stone-400 px-4">
           {t("footer_text_1")}
         </p>
         <p className="max-w-2xl mx-auto px-4 leading-relaxed">
           {t("footer_text_2")}
         </p>
-        {/* Blinking/Pulsing Visitor Counter */}
-        <div className="pt-2 flex justify-center items-center" id="footer-visitors-panel">
+        
+        {/* Blinking/Pulsing Visitor Counter and Support/Sponsorship Row */}
+        <div className="pt-2 flex flex-wrap justify-center items-center gap-2.5 max-w-lg mx-auto px-4" id="footer-badges-container">
+          {/* Visitor Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-900/40 border border-stone-850/60 rounded-full text-[10px] font-mono tracking-wider text-stone-400 shadow-md transition-all duration-300 hover:border-amber-500/20" id="visitors-counter-badge">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -3158,6 +3135,35 @@ export default function App() {
             </span>
             <span className="text-[8px] text-emerald-500 font-extrabold tracking-tighter opacity-80 animate-pulse bg-emerald-950/40 px-1 rounded">
               LIVE
+            </span>
+          </div>
+
+          {/* Elegant Volunteer Contribution (Mercado Pago) Heart Badge */}
+          <a
+            href="https://mpago.la/1LHyBwV"
+            target="_blank"
+            referrerPolicy="no-referrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-500/10 hover:bg-red-500/15 border border-red-500/20 hover:border-red-500/40 rounded-full text-[10px] font-mono tracking-wider text-red-400 shadow-md transition-all duration-300 hover:shadow-[0_0_12px_rgba(239,68,68,0.15)] group cursor-pointer"
+            id="footer-donate-badge"
+            title={language === "es" ? "Colaboración voluntaria para el mantenimiento del sitio" : "Support site maintenance"}
+          >
+            <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400/20 group-hover:scale-110 transition-all duration-200 animate-[pulse_2s_infinite]" />
+            <span className="font-extrabold uppercase">
+              {language === "es" ? "Colaboración Voluntaria" : language === "fr" ? "Soutenir" : "Support Site"}
+            </span>
+          </a>
+
+          {/* Sponsorships Accepted Indicator */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/5 border border-amber-500/15 rounded-full text-[10px] font-mono tracking-wider text-stone-400 shadow-md" id="sponsorship-info-badge">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+            </span>
+            <span className="text-stone-500 uppercase text-[9px] font-bold">
+              {language === "es" ? "PATROCINIOS:" : language === "fr" ? "SPONSORS:" : "SPONSORSHIPS:"}
+            </span>
+            <span className="font-semibold text-amber-400/90 text-[9px] uppercase">
+              {language === "es" ? "Aceptados" : language === "fr" ? "Acceptés" : "Accepted"}
             </span>
           </div>
         </div>
