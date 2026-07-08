@@ -43,6 +43,7 @@ import { playHotspotTone, startScanningSound, stopScanningSound, playAgingSlider
 import AnalysisComparer, { ScanOption } from "./components/AnalysisComparer";
 import { generateFallbackReport } from "./utils/reportGenerator";
 import GuestbookComments from "./components/GuestbookComments";
+import AdSenseConfigPanel, { AdSenseBanner, useAdSense } from "./components/AdSenseManager";
 
 const resizeImageData = (base64Str: string, maxDim: number): Promise<string> => {
   return new Promise((resolve) => {
@@ -542,6 +543,9 @@ const exportReportAsPng = (
 
 export default function App() {
   const { language, setLanguage, t } = useLanguage();
+
+  // Initialize Google AdSense automatic monetization script if Publisher ID is configured
+  useAdSense();
 
   // Dynamic Scan History list state - purely in-memory ("No guardar historial")
   const [scansList, setScansList] = useState<ScanOption[]>([]);
@@ -3103,9 +3107,19 @@ export default function App() {
           <FacialAnalysisGuide />
         </section>
 
+        {/* Google AdSense Middle Ad Banner */}
+        <section className="mt-12 max-w-5xl mx-auto px-4 animate-fade-in" id="adsense-middle-banner-section">
+          <AdSenseBanner type="horizontal" />
+        </section>
+
         {/* Visitor Guestbook & Comments Section (Option 3 - Serverless Webhook) */}
         <section className="mt-12" id="guestbook-comments-section">
           <GuestbookComments language={language} />
+        </section>
+
+        {/* Google AdSense Configuration Panel for Site Owners */}
+        <section className="mt-8 mb-12 border-t border-stone-900/60 pt-4" id="adsense-config-section">
+          <AdSenseConfigPanel />
         </section>
 
       </main>
