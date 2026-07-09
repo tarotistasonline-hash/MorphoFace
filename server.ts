@@ -719,6 +719,17 @@ app.get("/scan/:id", (req, res) => {
   }
 });
 
+// GET endpoints for Google AdSense / AdMob verification files
+app.get("/ads.txt", (req, res) => {
+  res.type("text/plain");
+  res.send("google.com, pub-8099027931324700, DIRECT, f08c47fec0942fa0");
+});
+
+app.get("/app-ads.txt", (req, res) => {
+  res.type("text/plain");
+  res.send("google.com, pub-8099027931324700, DIRECT, f08c47fec0942fa0");
+});
+
 // Configure Vite or Static file serving
 async function configureServer() {
   if (process.env.NODE_ENV !== "production") {
