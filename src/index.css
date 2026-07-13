@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+/* Collapse empty Google AdSense ads if unfilled or blocked by AdBlocker */
+ins.adsbygoogle[data-ad-status="unfilled"],
+ins.adsbygoogle[data-ad-status="unfilled"] iframe,
+ins.adsbygoogle:empty {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.adsbygoogle {
+  background: transparent !important;
+}

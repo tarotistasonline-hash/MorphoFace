@@ -15,6 +15,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { CommentEntry, getInitialComments } from "../data/comments";
+import { trackMixpanelEvent } from "./MixpanelManager";
 
 interface GuestbookCommentsProps {
   language: "es" | "en" | "fr";
@@ -169,6 +170,13 @@ export default function GuestbookComments({ language }: GuestbookCommentsProps) 
       date: new Date().toISOString().split("T")[0],
       isCustom: true
     };
+
+    trackMixpanelEvent("Guestbook Comment Submitted", {
+      rating: newComment.rating,
+      commentLength: newComment.text.length,
+      hasCustomName: !!name.trim(),
+      hasStructureSpecified: !!structure.trim()
+    });
 
     try {
       // Option 3: Real Serverless POST using Formspree or custom Webhook

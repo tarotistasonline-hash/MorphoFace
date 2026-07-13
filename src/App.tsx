@@ -44,6 +44,7 @@ import AnalysisComparer, { ScanOption } from "./components/AnalysisComparer";
 import { generateFallbackReport } from "./utils/reportGenerator";
 import GuestbookComments from "./components/GuestbookComments";
 import AdSenseConfigPanel, { AdSenseBanner, useAdSense } from "./components/AdSenseManager";
+import MixpanelConfigPanel, { trackMixpanelEvent, useMixpanel } from "./components/MixpanelManager";
 
 const resizeImageData = (base64Str: string, maxDim: number): Promise<string> => {
   return new Promise((resolve) => {
@@ -547,6 +548,27 @@ export default function App() {
   // Initialize Google AdSense automatic monetization script if Publisher ID is configured
   useAdSense();
 
+  // Initialize Mixpanel tracking
+  useMixpanel();
+
+  // Track initial page load
+  useEffect(() => {
+    trackMixpanelEvent("Page Loaded", {
+      locale: language,
+      referrer: typeof document !== "undefined" ? document.referrer : ""
+    });
+  }, []);
+
+  // Track language changes
+  const isFirstLanguageRender = useRef(true);
+  useEffect(() => {
+    if (isFirstLanguageRender.current) {
+      isFirstLanguageRender.current = false;
+      return;
+    }
+    trackMixpanelEvent("Language Changed", { newLanguage: language });
+  }, [language]);
+
   // Dynamic Scan History list state - purely in-memory ("No guardar historial")
   const [scansList, setScansList] = useState<ScanOption[]>([]);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
@@ -783,6 +805,7 @@ export default function App() {
     setErrorLog(null);
     setCustomReport(null);
     setIsFallbackActive(false);
+    trackMixpanelEvent("Analysis Started", { language });
 
     try {
       const optimizedBase64 = await resizeImageData(base64Data, 1024);
@@ -807,6 +830,13 @@ export default function App() {
         setIsFallbackActive(true);
       }
       
+      trackMixpanelEvent("Analysis Succeeded", { 
+        faceShape: data.report.faceShape, 
+        temperament: data.report.temperament, 
+        overallType: data.report.overallType,
+        mode: "gemini" 
+      });
+
       const newScanItem: ScanOption = {
         id: Date.now().toString(),
         name: shareSubjectName || (language === "es" ? `Escaneo #${scansList.length + 1}` : language === "fr" ? `Analyse #${scansList.length + 1}` : `Scan #${scansList.length + 1}`),
@@ -829,6 +859,13 @@ export default function App() {
         const fallbackReport = generateFallbackReport(language, optimizedBase64);
         setCustomReport(fallbackReport);
         setIsFallbackActive(true);
+
+        trackMixpanelEvent("Analysis Succeeded", { 
+          faceShape: fallbackReport.faceShape, 
+          temperament: fallbackReport.temperament, 
+          overallType: fallbackReport.overallType,
+          mode: "fallback_local" 
+        });
 
         const newScanItem: ScanOption = {
           id: Date.now().toString(),
@@ -905,6 +942,7 @@ export default function App() {
   const localShare = shareTranslations[language] || shareTranslations["es"];
 
   const handleCopyLink = () => {
+    trackMixpanelEvent("Share Link Copied", { type: shareLinkType, subjectName: shareSubjectName });
     const baseUrl = typeof window !== "undefined" ? window.location.origin + window.location.pathname : "";
     let link = baseUrl;
     
@@ -940,6 +978,11 @@ export default function App() {
 
   const handleDownloadPdf = () => {
     if (!activeReport) return;
+    trackMixpanelEvent("PDF Report Downloaded", { 
+      subjectName: shareSubjectName || localShare.defaultSubject, 
+      faceShape: activeReport.faceShape,
+      temperament: activeReport.temperament
+    });
     setIsGeneratingPdf(true);
     const subjectName = shareSubjectName || localShare.defaultSubject;
     
@@ -956,6 +999,11 @@ export default function App() {
 
   const handleExportPng = () => {
     if (!activeReport) return;
+    trackMixpanelEvent("PNG Report Exported", { 
+      subjectName: shareSubjectName || localShare.defaultSubject, 
+      faceShape: activeReport.faceShape,
+      temperament: activeReport.temperament
+    });
     const subjectName = shareSubjectName || localShare.defaultSubject;
     const currentSymmetryScore = symmetryData?.overallSymmetry ?? 85;
     exportReportAsPng(activeReport, imageSrc, subjectName, currentSymmetryScore, language);
@@ -3107,20 +3155,21 @@ export default function App() {
           <FacialAnalysisGuide />
         </section>
 
-        {/* Google AdSense Middle Ad Banner */}
-        <section className="mt-12 max-w-5xl mx-auto px-4 animate-fade-in" id="adsense-middle-banner-section">
-          <AdSenseBanner type="horizontal" />
-        </section>
+        {/* Google AdSense Middle Ad Banner (takes 0px of space if inactive or collapsed) */}
+        <AdSenseBanner type="horizontal" />
 
         {/* Visitor Guestbook & Comments Section (Option 3 - Serverless Webhook) */}
         <section className="mt-12" id="guestbook-comments-section">
           <GuestbookComments language={language} />
         </section>
 
-        {/* Google AdSense Configuration Panel for Site Owners */}
-        <section className="mt-8 mb-12 border-t border-stone-900/60 pt-4" id="adsense-config-section">
+        {/* Consolidated Site Administrator Tools Panel */}
+        <div className="mt-12 border-t border-stone-900/40 max-w-5xl mx-auto" />
+
+        <div className="mt-6 mb-10 space-y-4" id="owner-settings-consolidation">
           <AdSenseConfigPanel />
-        </section>
+          <MixpanelConfigPanel />
+        </div>
 
       </main>
 

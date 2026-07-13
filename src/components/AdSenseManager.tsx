@@ -81,7 +81,21 @@ interface AdBannerProps {
 
 export function AdSenseBanner({ slotId, type = "horizontal", className = "" }: AdBannerProps) {
   const { pubId, isEnabled } = useAdSense();
-  const [adError, setAdError] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const checkVisibility = () => {
+      setPanelVisible(localStorage.getItem("morphoface-adsense-panel-visible") === "true");
+    };
+
+    checkVisibility();
+    window.addEventListener("morphoface-adsense-panel-visible-change", checkVisibility);
+    return () => {
+      window.removeEventListener("morphoface-adsense-panel-visible-change", checkVisibility);
+    };
+  }, []);
 
   useEffect(() => {
     if (isEnabled && pubId) {
@@ -95,17 +109,20 @@ export function AdSenseBanner({ slotId, type = "horizontal", className = "" }: A
   }, [isEnabled, pubId, slotId]);
 
   if (!isEnabled || !pubId) {
-    // Show an elegant, subtle spacer or simulated banner for the administrator/visitor during setup
+    if (!panelVisible) {
+      return null;
+    }
+    // Show an elegant, subtle spacer or simulated banner ONLY when the administrator config panel is open
     return (
       <div 
-        className={`w-full bg-stone-950/20 border border-stone-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all ${
+        className={`w-full bg-stone-950/20 border border-stone-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all my-6 ${
           type === "horizontal" ? "min-h-[90px]" : "min-h-[250px] max-w-[300px] mx-auto"
         } ${className}`}
         id="adsense-placeholder-banner"
       >
         <div className="flex items-center gap-1.5 text-stone-600 text-[10px] font-mono tracking-wider uppercase">
           <DollarSign className="w-3.5 h-3.5 text-amber-500/20" />
-          <span>Espacio de Publicidad</span>
+          <span>[Vista Previa] Espacio de Publicidad</span>
         </div>
         <p className="text-[10px] text-stone-500 max-w-md mt-1 font-sans">
           Aquí aparecerán tus anuncios de Google AdSense una vez que configures tu ID de Editor abajo.
@@ -116,7 +133,7 @@ export function AdSenseBanner({ slotId, type = "horizontal", className = "" }: A
 
   // Active AdSense ad block
   return (
-    <div className={`overflow-hidden my-4 mx-auto w-full text-center ${className}`} id="adsense-active-banner-container">
+    <div className={`overflow-hidden my-6 mx-auto w-full text-center ${className}`} id="adsense-active-banner-container">
       <ins 
         className="adsbygoogle"
         style={{ display: "block", textAlign: "center" }}
@@ -150,6 +167,13 @@ export default function AdSenseConfigPanel() {
       setIsAdminLocked(savedLocked);
     }
   }, [pubId]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("morphoface-adsense-panel-visible", String(showPanel));
+      window.dispatchEvent(new Event("morphoface-adsense-panel-visible-change"));
+    }
+  }, [showPanel]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,10 +248,10 @@ export default function AdSenseConfigPanel() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto mt-8 px-4" id="adsense-config-root">
+    <div className="max-w-5xl mx-auto px-4" id="adsense-config-root">
       
       {/* Small floating button or discreet gear link at the very bottom */}
-      <div className="flex justify-center items-center gap-4 mt-6">
+      <div className="flex justify-center items-center gap-4 mt-2">
         <button
           onClick={() => setShowPanel(!showPanel)}
           className="flex items-center gap-1.5 px-4 py-2 bg-stone-900 hover:bg-stone-850 border border-stone-800 rounded-full text-[11px] font-mono text-stone-400 hover:text-amber-400 transition-all cursor-pointer shadow-md"
